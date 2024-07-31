@@ -1,0 +1,11 @@
+{
+    "KPlugin": {
+        "Description": "Update IMA",
+        "FormFactors": [
+            "desktop"
+        ],
+        "Icon": "run-build-install",
+        "Name": "System update"
+    },
+    "X-KDE-System-Settings-Parent-Category": "system-administration"
+}

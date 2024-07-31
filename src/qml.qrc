@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/kcm/kcm_imaupdate">
+        <file>ui/main.qml</file>
+    </qresource>
+</RCC>
