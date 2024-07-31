@@ -97,10 +97,29 @@ KCMUtils.SimpleKCM {
                 id: checkUpdateButton
                 text: i18n("Check for updates")
                 Layout.alignment: Qt.AlignHCenter
+                visible: !imaupdateSettings.shouldShowInfo
                 onClicked: {
                     imaupdateSettings.checkForUpdates()
                     console.log("Current Version:", imaupdateSettings.currentVersion)
                     console.log("Calling ima-update for update check")
+                }
+            }
+            Button {
+                id: applyUpdateButton
+                text: i18n("Apply update")
+                Layout.alignment: Qt.AlignHCenter
+                visible: imaupdateSettings.shouldShowInfo
+                onClicked: {
+                    console.log("Get trolled")
+                }
+            }
+            Button {
+                id: updateFinishedButton
+                text: i18n("Reboot")
+                Layout.alignment: Qt.AlignHCenter
+                visible: imaupdateSettings.isOnStage2Reboot
+                onClicked: {
+                    console.log("Get trolled")
                 }
             }
         }
