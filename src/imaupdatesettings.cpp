@@ -30,10 +30,15 @@ IMAUpdateSettings::IMAUpdateSettings(QObject *parent, const KPluginMetaData &dat
 m_updateInProgress(false),
 m_updateAvailable(false),
 m_shouldShowInfo(false),
+m_checkingUpdates(false),
 m_shouldShowCurrentInfo(true),
 m_updateProgress(0),
+m_updateFailed(false),
+m_updateCompleted(false),
+m_upToDate(false),
 m_updateProcess(new QProcess(this)),
-m_applyUpdateProcess(new QProcess(this))
+m_applyUpdateProcess(new QProcess(this)),
+m_rebootSeq(new QProcess(this))
 {
     registerTypes();
 
@@ -43,6 +48,8 @@ m_applyUpdateProcess(new QProcess(this))
             this, [this](int exitCode, QProcess::ExitStatus) {
                 if (exitCode == 70) {
                     fetchUpdateInfo();
+                    m_checkingUpdates = false;
+                    Q_EMIT checkingUpdatesChanged();
                     m_shouldShowInfo = true;
                     Q_EMIT shouldShowInfoChanged();
                 } else {
@@ -50,9 +57,28 @@ m_applyUpdateProcess(new QProcess(this))
                     m_changelog.clear();
                     m_updateAvailable = false;
                     m_updateInProgress = false;
+                    m_upToDate = true;
+                    Q_EMIT upToDateChanged();
                     Q_EMIT updateInProgressChanged();
                     Q_EMIT latestVersionChanged();
                     Q_EMIT changelogChanged();
+                }
+            });
+
+    connect(m_applyUpdateProcess, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),
+            this, [this](int exitCode, QProcess::ExitStatus) {
+                if (exitCode == 50) {  // Error occurred
+                    m_updateInProgress = false;
+                    Q_EMIT updateInProgressChanged();
+                    m_updateFailed = true;
+                    m_updateCompleted = false;
+                    Q_EMIT updateFailedChanged();
+                } else if (exitCode == 51) {  // Update completed
+                    m_updateInProgress = false;
+                    Q_EMIT updateInProgressChanged();
+                    m_updateCompleted = true;
+                    m_updateFailed = false;
+                    Q_EMIT updateCompletedChanged();
                 }
             });
 
@@ -138,6 +164,16 @@ bool IMAUpdateSettings::shouldShowInfo() const
     return m_shouldShowInfo;
 }
 
+bool IMAUpdateSettings::checkingUpdates() const
+{
+    return m_checkingUpdates;
+}
+
+bool IMAUpdateSettings::upToDate() const
+{
+    return m_upToDate;
+}
+
 bool IMAUpdateSettings::shouldShowCurrentInfo() const
 {
     return m_shouldShowCurrentInfo;
@@ -153,13 +189,26 @@ int IMAUpdateSettings::updateProgress() const
     return m_updateProgress;
 }
 
+bool IMAUpdateSettings::updateFailed() const
+{
+    return m_updateFailed;
+}
+
+bool IMAUpdateSettings::updateCompleted() const
+{
+    return m_updateCompleted;
+}
+
 void IMAUpdateSettings::checkForUpdates()
 {
 
     QString program = QStringLiteral("/usr/bin/ima-update");
     QStringList arguments;
     arguments << QStringLiteral("check") << QStringLiteral("--settingsapp");
-
+    m_checkingUpdates = true;
+    Q_EMIT checkingUpdatesChanged();
+    m_upToDate = false;
+    Q_EMIT upToDateChanged();
     m_updateProcess->setProgram(program);
     m_updateProcess->setArguments(arguments);
     m_updateProcess->start();
@@ -184,6 +233,11 @@ void IMAUpdateSettings::startUpdateChain()
     Q_EMIT updateProgressChanged();
     Q_EMIT updateStatusChanged();
 
+    m_updateFailed = false;
+    Q_EMIT updateFailedChanged();
+    m_updateCompleted = false;
+    Q_EMIT updateCompletedChanged();
+
     m_applyUpdateProcess->setProgram(program);
     m_applyUpdateProcess->setArguments(arguments);
     m_applyUpdateProcess->start();
@@ -205,6 +259,13 @@ void IMAUpdateSettings::handleUpdateOutput()
             }
         }
     }
+}
+
+void IMAUpdateSettings::handleReboot()
+{
+    QString program = QStringLiteral("/usr/bin/reboot");
+    m_rebootSeq->setProgram(program);
+    m_rebootSeq->start();
 }
 
 #include "imaupdatesettings.moc"

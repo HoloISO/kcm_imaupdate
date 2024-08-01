@@ -23,6 +23,10 @@ class IMAUpdateSettings : public KQuickConfigModule
     Q_PROPERTY(bool shouldShowCurrentInfo READ shouldShowCurrentInfo NOTIFY shouldShowCurrentInfoChanged)
     Q_PROPERTY(QString updateStatus READ updateStatus NOTIFY updateStatusChanged)
     Q_PROPERTY(int updateProgress READ updateProgress NOTIFY updateProgressChanged)
+    Q_PROPERTY(bool updateFailed READ updateFailed NOTIFY updateFailedChanged)
+    Q_PROPERTY(bool updateCompleted READ updateCompleted NOTIFY updateCompletedChanged)
+    Q_PROPERTY(bool checkingUpdates READ checkingUpdates NOTIFY checkingUpdatesChanged)
+    Q_PROPERTY(bool upToDate READ upToDate NOTIFY upToDateChanged)
 
 public:
     explicit IMAUpdateSettings(QObject *parent = nullptr, const KPluginMetaData &data = KPluginMetaData());
@@ -35,9 +39,14 @@ public:
     bool shouldShowCurrentInfo() const;
     QString updateStatus() const;
     int updateProgress() const;
+    bool updateFailed() const;
+    bool updateCompleted() const;
+    bool checkingUpdates() const;
+    bool upToDate() const;
 
     Q_INVOKABLE void checkForUpdates();
     Q_INVOKABLE void startUpdateChain();
+    Q_INVOKABLE void handleReboot();
 
 Q_SIGNALS:
     void currentVersionChanged();
@@ -48,6 +57,10 @@ Q_SIGNALS:
     void shouldShowCurrentInfoChanged();
     void updateStatusChanged();
     void updateProgressChanged();
+    void updateFailedChanged();
+    void updateCompletedChanged();
+    void checkingUpdatesChanged();
+    void upToDateChanged();
 
 private:
     QString readOSVersion() const;
@@ -61,11 +74,16 @@ private:
     bool m_updateAvailable;
     bool m_shouldShowCurrentInfo;
     bool m_shouldShowInfo;
+    bool m_updateFailed;
+    bool m_updateCompleted;
+    bool m_checkingUpdates;
+    bool m_upToDate;
     QString m_updateStatus;
     int m_updateProgress;
 
     QProcess *m_updateProcess;
     QProcess *m_applyUpdateProcess;
+    QProcess *m_rebootSeq;
 };
 
 #endif // IMAUPDATESETTINGS_H
