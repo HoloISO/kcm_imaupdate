@@ -1,5 +1,5 @@
 /**
- * SPDX-FileCopyrightText: 2024 Your Name <your.email@domain.com>
+ * SPDX-FileCopyrightText: 2024 Adam Jafarov <thevakhovske@petalmail.com>
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
@@ -19,7 +19,10 @@ class IMAUpdateSettings : public KQuickConfigModule
     Q_PROPERTY(QString latestVersion READ latestVersion NOTIFY latestVersionChanged)
     Q_PROPERTY(QString changelog READ changelog NOTIFY changelogChanged)
     Q_PROPERTY(bool updateInProgress READ updateInProgress NOTIFY updateInProgressChanged)
-    Q_PROPERTY(bool shouldShowInfo READ shouldShowInfo NOTIFY shouldShowInfoChanged) // HACK: Make KCM disable certain elements till advised so
+    Q_PROPERTY(bool shouldShowInfo READ shouldShowInfo NOTIFY shouldShowInfoChanged)
+    Q_PROPERTY(bool shouldShowCurrentInfo READ shouldShowCurrentInfo NOTIFY shouldShowCurrentInfoChanged)
+    Q_PROPERTY(QString updateStatus READ updateStatus NOTIFY updateStatusChanged)
+    Q_PROPERTY(int updateProgress READ updateProgress NOTIFY updateProgressChanged)
 
 public:
     explicit IMAUpdateSettings(QObject *parent = nullptr, const KPluginMetaData &data = KPluginMetaData());
@@ -29,8 +32,12 @@ public:
     QString changelog() const;
     bool updateInProgress() const;
     bool shouldShowInfo() const;
+    bool shouldShowCurrentInfo() const;
+    QString updateStatus() const;
+    int updateProgress() const;
 
     Q_INVOKABLE void checkForUpdates();
+    Q_INVOKABLE void startUpdateChain();
 
 Q_SIGNALS:
     void currentVersionChanged();
@@ -38,19 +45,27 @@ Q_SIGNALS:
     void changelogChanged();
     void updateInProgressChanged();
     void shouldShowInfoChanged();
+    void shouldShowCurrentInfoChanged();
+    void updateStatusChanged();
+    void updateProgressChanged();
 
 private:
     QString readOSVersion() const;
     void fetchUpdateInfo();
+    void handleUpdateOutput();
 
     QString m_currentVersion;
     QString m_latestVersion;
     QString m_changelog;
     bool m_updateInProgress;
     bool m_updateAvailable;
+    bool m_shouldShowCurrentInfo;
     bool m_shouldShowInfo;
+    QString m_updateStatus;
+    int m_updateProgress;
 
     QProcess *m_updateProcess;
+    QProcess *m_applyUpdateProcess;
 };
 
 #endif // IMAUPDATESETTINGS_H

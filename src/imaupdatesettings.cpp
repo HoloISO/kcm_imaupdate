@@ -1,3 +1,9 @@
+/**
+ * SPDX-FileCopyrightText: 2024 Adam Jafarov <thevakhovske@petalmail.com>
+ * SPDX-License-Identifier: GPL-2.0-or-later
+ */
+
+
 #include "imaupdatesettings.h"
 #include <KPluginFactory>
 #include <QFile>
@@ -24,9 +30,11 @@ IMAUpdateSettings::IMAUpdateSettings(QObject *parent, const KPluginMetaData &dat
 m_updateInProgress(false),
 m_updateAvailable(false),
 m_shouldShowInfo(false),
-m_updateProcess(new QProcess(this))
+m_shouldShowCurrentInfo(true),
+m_updateProgress(0),
+m_updateProcess(new QProcess(this)),
+m_applyUpdateProcess(new QProcess(this))
 {
-
     registerTypes();
 
     m_currentVersion = readOSVersion();
@@ -47,6 +55,8 @@ m_updateProcess(new QProcess(this))
                     Q_EMIT changelogChanged();
                 }
             });
+
+    connect(m_applyUpdateProcess, &QProcess::readyReadStandardOutput, this, &IMAUpdateSettings::handleUpdateOutput);
 }
 
 QString IMAUpdateSettings::readOSVersion() const
@@ -128,10 +138,23 @@ bool IMAUpdateSettings::shouldShowInfo() const
     return m_shouldShowInfo;
 }
 
+bool IMAUpdateSettings::shouldShowCurrentInfo() const
+{
+    return m_shouldShowCurrentInfo;
+}
+
+QString IMAUpdateSettings::updateStatus() const
+{
+    return m_updateStatus;
+}
+
+int IMAUpdateSettings::updateProgress() const
+{
+    return m_updateProgress;
+}
+
 void IMAUpdateSettings::checkForUpdates()
 {
-    m_updateInProgress = true;
-    Q_EMIT updateInProgressChanged();
 
     QString program = QStringLiteral("/usr/bin/ima-update");
     QStringList arguments;
@@ -140,6 +163,48 @@ void IMAUpdateSettings::checkForUpdates()
     m_updateProcess->setProgram(program);
     m_updateProcess->setArguments(arguments);
     m_updateProcess->start();
+}
+
+void IMAUpdateSettings::startUpdateChain()
+{
+    QString program = QStringLiteral("/usr/bin/ima-update");
+    QStringList arguments;
+    arguments << QStringLiteral("apply-now") << QStringLiteral("--settingsapp");
+
+    m_shouldShowInfo = false;
+    Q_EMIT shouldShowInfoChanged();
+
+    m_shouldShowCurrentInfo = false;
+    Q_EMIT shouldShowCurrentInfoChanged();
+
+    m_updateInProgress = true;
+    Q_EMIT updateInProgressChanged();
+    m_updateProgress = 0;
+    m_updateStatus = QStringLiteral("Starting update...");
+    Q_EMIT updateProgressChanged();
+    Q_EMIT updateStatusChanged();
+
+    m_applyUpdateProcess->setProgram(program);
+    m_applyUpdateProcess->setArguments(arguments);
+    m_applyUpdateProcess->start();
+}
+
+void IMAUpdateSettings::handleUpdateOutput()
+{
+    while (m_applyUpdateProcess->canReadLine()) {
+        QString line = QString::fromUtf8(m_applyUpdateProcess->readLine()).trimmed();
+        if (line.startsWith(QStringLiteral("CMSG="))) {
+            m_updateStatus = line.mid(QStringLiteral("CMSG=").length());
+            Q_EMIT updateStatusChanged();
+        } else if (line.startsWith(QStringLiteral("CPROGRESS="))) {
+            bool ok;
+            int progress = line.mid(QStringLiteral("CPROGRESS=").length()).toInt(&ok);
+            if (ok) {
+                m_updateProgress = progress;
+                Q_EMIT updateProgressChanged();
+            }
+        }
+    }
 }
 
 #include "imaupdatesettings.moc"
