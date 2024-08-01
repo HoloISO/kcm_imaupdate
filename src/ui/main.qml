@@ -12,7 +12,7 @@ import org.example.imaupdatesettings 1.0
 
 KCMUtils.SimpleKCM {
     id: updaterKCM
-    title: i18n("System update")
+    title: i18n("System Update")
 
     property var imaupdateSettings: IMAUpdateSettings
 
@@ -21,11 +21,11 @@ KCMUtils.SimpleKCM {
 
         ColumnLayout {
             anchors.fill: parent
-            spacing: 20
+            spacing: 10
 
             Rectangle {
                 Layout.fillWidth: true
-                height: 63
+                Layout.preferredHeight: 70
                 color: Kirigami.Theme.backgroundColor
                 radius: 6
                 border.color: Kirigami.Theme.textColor
@@ -49,7 +49,7 @@ KCMUtils.SimpleKCM {
 
             Rectangle {
                 Layout.fillWidth: true
-                height: 63
+                Layout.preferredHeight: 70
                 color: Kirigami.Theme.backgroundColor
                 radius: 6
                 border.color: Kirigami.Theme.textColor
@@ -73,7 +73,7 @@ KCMUtils.SimpleKCM {
 
             Rectangle {
                 Layout.fillWidth: true
-                height: 63
+                Layout.preferredHeight: 70
                 color: Kirigami.Theme.backgroundColor
                 radius: 6
                 border.color: Kirigami.Theme.textColor
@@ -125,7 +125,7 @@ KCMUtils.SimpleKCM {
 
             Rectangle {
                 Layout.fillWidth: true
-                height: 63
+                Layout.preferredHeight: 100
                 color: Kirigami.Theme.backgroundColor
                 radius: 6
                 border.color: Kirigami.Theme.textColor
@@ -153,36 +153,45 @@ KCMUtils.SimpleKCM {
                 }
             }
 
-            Button {
-                id: checkUpdateButton
-                text: i18n("Check for updates")
-                Layout.alignment: Qt.AlignHCenter
-                visible: !imaupdateSettings.shouldShowInfo && !imaupdateSettings.updateInProgress
-                onClicked: {
-                    imaupdateSettings.checkForUpdates()
-                    console.log("Current Version:", imaupdateSettings.currentVersion)
-                    console.log("Calling ima-update for update check")
-                }
+            Item {
+                Layout.fillHeight: true
             }
-            Button {
-                id: applyUpdateButton
-                text: i18n("Apply update")
-                Layout.alignment: Qt.AlignHCenter
-                visible: imaupdateSettings.shouldShowInfo && !imaupdateSettings.updateInProgress
-                onClicked: {
-                    imaupdateSettings.startUpdateChain()
-                    console.log("Calling ima-update for starting the update")
+
+            ColumnLayout {
+                Layout.alignment: Qt.AlignBottom
+                spacing: 10
+
+                Button {
+                    id: checkUpdateButton
+                    text: i18n("Check for updates")
+                    Layout.alignment: Qt.AlignHCenter
+                    visible: !imaupdateSettings.shouldShowInfo && !imaupdateSettings.updateInProgress
+                    onClicked: {
+                        imaupdateSettings.checkForUpdates()
+                        console.log("Current Version:", imaupdateSettings.currentVersion)
+                        console.log("Calling ima-update for update check")
+                    }
                 }
-            }
-            Button {
-                // PLACEHOLDER
-                id: updateFinishedButton
-                text: i18n("Reboot")
-                Layout.alignment: Qt.AlignHCenter
-                //visible: imaupdateSettings.isOnStage2Reboot
-                visible: false
-                onClicked: {
-                    imaupdateSettings.updateRebootDaemon()
+
+                Button {
+                    id: applyUpdateButton
+                    text: i18n("Apply update")
+                    Layout.alignment: Qt.AlignHCenter
+                    visible: imaupdateSettings.shouldShowInfo && !imaupdateSettings.updateInProgress
+                    onClicked: {
+                        imaupdateSettings.startUpdateChain()
+                        console.log("Calling ima-update for starting the update")
+                    }
+                }
+
+                Button {
+                    id: updateFinishedButton
+                    text: i18n("Reboot")
+                    Layout.alignment: Qt.AlignHCenter
+                    visible: false // Change this to true when needed
+                    onClicked: {
+                        imaupdateSettings.updateRebootDaemon()
+                    }
                 }
             }
         }

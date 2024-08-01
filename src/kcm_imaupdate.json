@@ -5,7 +5,7 @@
             "desktop"
         ],
         "Icon": "run-build-install",
-        "Name": "System update"
+        "Name": "System Update"
     },
     "X-KDE-System-Settings-Parent-Category": "system-administration"
 }
