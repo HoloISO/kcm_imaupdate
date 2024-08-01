@@ -58,6 +58,8 @@ m_rebootSeq(new QProcess(this))
                     m_updateAvailable = false;
                     m_updateInProgress = false;
                     m_upToDate = true;
+                    m_checkingUpdates = false;
+                    Q_EMIT checkingUpdatesChanged();
                     Q_EMIT upToDateChanged();
                     Q_EMIT updateInProgressChanged();
                     Q_EMIT latestVersionChanged();
